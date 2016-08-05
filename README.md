@@ -1,2 +1,4 @@
 # Ashor
-A dead-simple blogging platform
+A dead-simple blogging platform.
+
+Documentation  to come.
