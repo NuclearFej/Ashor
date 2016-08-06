@@ -17,7 +17,7 @@
     along with Ashor.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-class Tag extends SplEnum {
+abstract class Tag {
     const Bold = 1;
     const Italics = 2;
     const Header = 3;
@@ -43,9 +43,7 @@ function parse($text, $postID, $oneLine = FALSE ,$pos = 0) {
     $ret["beforeTheFoldPos"] = -1;
 
     for (; $pos < strlen($text); $pos++) {
-        if ($text[$pos] == "\\")
-            $escaped = true;
-        elseif ($text[$pos] == "\n")
+        if ($text[$pos] == "\n")
             $newline++;
         elseif (ord($text[$pos]) >= 32) { //32 or 0x20 is the space character.
             if ($newline == 1) {
@@ -56,7 +54,12 @@ function parse($text, $postID, $oneLine = FALSE ,$pos = 0) {
                 $newline = 0;
             }
 
-            if ($escaped) {
+            if (!$escaped) {
+                if ($text[$pos] == "\\")
+                    $escaped = true;
+                else
+                    $ret["html"] .= $text[$pos];
+            } else { //If the next character is escaped, we parse the tag.
                 if ($text[$pos] == "]") {
                     switch (array_pop($tagStack)) {
                         case Tag::Bold:
@@ -80,11 +83,11 @@ function parse($text, $postID, $oneLine = FALSE ,$pos = 0) {
                     $ret["html"] .= "<span class=\"ashor-header\">";
                     $tagStack[] = Tag::Header;
                 } elseif ($text[$pos] == "p" || $text[$pos] == "P") {
-                    $innards = parseTagWithAttribute($text, $pos);
+                    $innards = parseTagWithAttribute($text, ++$pos);
                     $ret["html"] .= "<img class='ashor-img' src='blog/img/$postID/{$innards["attrib"]}'>";
                     $pos = $innards["pos"]; //$pos is the ending ']', which will then be immediately incremented.
                 } elseif ($text[$pos] == "l" || $text[$pos] == "L") {
-                    $innards = parseTagWithAttribute($text, $pos);
+                    $innards = parseTagWithAttribute($text, ++$pos);
                     $ret["html"] .= "<a class='ashor-link' href='{$innards["attrib"]}'>";
                     $pos = $innards["pos"];
                     $tagStack[] = Tag::Link;
@@ -95,10 +98,11 @@ function parse($text, $postID, $oneLine = FALSE ,$pos = 0) {
                 else
                     echo "This character was unduly escaped: " . $text[$pos];
                 $escaped = false;
-            } else
-                $ret["html"] .= $text[$pos];
+            }
+
         }
     }
+
     if (!$oneLine)
         $ret["html"] .= "</p>";
     return $ret;
@@ -109,6 +113,8 @@ function parseTagWithAttribute($str, $startPos) {
     if ($str[$startPos] != "[")
         die("There's a misformatted tag at location $startPos.");
     $ret["pos"] = strpos($str, "]", ++$startPos);
-    $ret["attrib"] = substr($str, $startPos, $startPos - $ret["pos"]);
+    if ($ret["pos"] === FALSE)
+        die("Couldn't find a closing ']' for the tag around $startPos.");
+    $ret["attrib"] = substr($str, $startPos, $ret["pos"] - $startPos);
     return $ret;
 }
