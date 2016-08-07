@@ -89,7 +89,7 @@ foreach ($files as $file) {
 if (!usort($index, function ($post1, $post2) { return strcmp($post2["postID"], $post1["postID"]); }))
     die("Couldn't sort the posts, for some reason.");
 
-$indexHTML = "<main class='ashor-index'>\n";
+$indexHTML = "<main id='ashor-index'>\n";
 foreach ($index as $post) {
     $indexHTML .=
         "    <section class='ashor-index-post'>\n" .
@@ -97,7 +97,7 @@ foreach ($index as $post) {
         "        <time class='ashor-index-date' datetime='" . $post["dateObj"]->format("Y-m-d") . "'>" .
         "{$post["dateStr"]}</time>\n" .
         "        <div class='ashor-index-content'>{$post["beforeTheFoldText"]}</div>\n" .
-        "        <a class='ashor-index-link' href='blog/{$post["postID"]}.html'>Continue reading</a>\n";
+        "        <a class='ashor-index-link' href='blog/{$post["postID"]}.html'>Continue reading</a>\n" .
         "    </section>\n";
 }
 $indexHTML .= "</main>\n";
