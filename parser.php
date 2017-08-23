@@ -82,7 +82,7 @@ function parse($text, $postID, $oneLine = FALSE ,$pos = 0) {
                 } elseif ($text[$pos] == "h" || $text[$pos] == "H") {
                     $ret["html"] .= "<span class=\"ashor-header\">";
                     $tagStack[] = Tag::Header;
-                } elseif ($text[$pos] == "p" || $text[$pos] == "P") {
+                } elseif ($text[$pos] == "p" || $text[$pos] == "P") { //'p' is for 'picture'
                     $innards = parseTagWithAttribute($text, ++$pos);
                     $ret["html"] .= "<img class='ashor-img' src='blog/img/$postID/{$innards["attrib"]}'>";
                     $pos = $innards["pos"]; //$pos is the ending ']', which will then be immediately incremented.
@@ -93,10 +93,13 @@ function parse($text, $postID, $oneLine = FALSE ,$pos = 0) {
                     $tagStack[] = Tag::Link;
                 } elseif ($text[$pos] == "f" || $text[$pos] == "F")
                     $ret["beforeTheFoldPos"] = $pos - 1; //$pos - 1 accounts for the extra 'h' character.
+                elseif ($text[$pos] == "r" || $text[$pos] == "R") //'r' is for 'return'
+                    $ret["html"] .= "<br>";
                 elseif ($text[$pos] == "\\")
                     $ret["html"] .= "\\";
                 else
                     echo "This character was unduly escaped: " . $text[$pos];
+
                 $escaped = false;
             }
 
