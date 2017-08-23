@@ -97,7 +97,7 @@ foreach ($index as $post) {
         "        <time class='ashor-index-date' datetime='" . $post["dateObj"]->format("Y-m-d") . "'>" .
         "{$post["dateStr"]}</time>\n" .
         "        <div class='ashor-index-content'>{$post["beforeTheFoldText"]}</div>\n" .
-        "        <a class='ashor-index-link' href='blog/{$post["postID"]}.html'>Continue reading</a>\n" .
+        "        <a class='ashor-index-link' href='blog/{$post["postID"]}.html'>Continue reading »</a>\n" .
         "    </section>\n";
 }
 $indexHTML .= "</main>\n";
