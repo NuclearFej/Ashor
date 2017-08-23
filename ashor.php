@@ -21,6 +21,10 @@ echo "Ashor by Jeff Meli, licensed under AGPLv3. Visit fej.io for info.\n";
 
 require "parser.php";
 
+/* 0x20 or decimal 32 is the US-ASCII value for the space character.
+This is useful because characters with values 0 through 31 are control characters. */
+const ORD_OF_SPACE_CHARACTER = 32; 
+
 $files = scandir("posts");
 if ($files === FALSE)
     die("Couldn't scan the posts folder.");
@@ -38,13 +42,13 @@ foreach ($files as $file) {
 
         //Copy everything in the first line to the title string, excluding the \n at the end.
         for ($i = 0; $text[$i] != "\n"; $i++)
-            if (ord($text[$i]) >= ord(" "))
+            if (ord($text[$i]) >= ORD_OF_SPACE_CHARACTER)
                 $title .= $text[$i];
         $i++; //Increment to get to the next line (in other words, skip the \n)
 
         //Do the same as above for the date *string*.
         for (; $text[$i] != "\n"; $i++)
-            if (ord($text[$i]) >= ord(" "))
+            if (ord($text[$i]) >= ORD_OF_SPACE_CHARACTER)
                 $dateFromSource .= $text[$i];
         $i++;
 
@@ -56,21 +60,17 @@ foreach ($files as $file) {
 
         //And finally for the post ID.
         for (; $text[$i] != "\n"; $i++)
-            if (ord($text[$i]) >= ord(" "))
+            if (ord($text[$i]) >= ORD_OF_SPACE_CHARACTER)
                 $postID .= $text[$i];
         $i++;
 
         $postText .= "<div id='ashor-title'>" . parse($title, $postID, TRUE)["html"] . "</div>\n";
         $postText .= "<div id='ashor-date'>" . parse($dateStr, $postID, TRUE)["html"] . "</div>\n";
 
-        //For grabbing content to be placed before the fold, using substr().
-        $firstCharOfBody = $i;
-
         $parsed = parse($text, $postID, FALSE, $i);
         $postText .= $parsed["html"];
-        $beforeTheFoldText = substr($text, $firstCharOfBody, $parsed["beforeTheFoldPos"] - $firstCharOfBody);
         $index[$indexNum++] = ["title" => $title, "dateStr" => $dateStr,
-            "dateObj" => $date, "beforeTheFoldText" => $beforeTheFoldText, "postID" => $postID];
+            "dateObj" => $date, "beforeTheFoldText" => $parsed["beforeTheFoldText"], "postID" => $postID];
 
         $postTemplateFile = fopen("templates/post-template.html", "r") or die("I couldn't read the post template.");
         $postTemplate = fread($postTemplateFile, filesize("templates/post-template.html"));
@@ -114,5 +114,3 @@ fwrite($indexFile, $indexReplaced);
 fclose($indexFile);
 
 echo "...done.\n";
-
-

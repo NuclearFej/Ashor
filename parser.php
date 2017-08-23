@@ -26,12 +26,13 @@ abstract class Tag {
     const Link = 6;
 }
 
-/*  Parses Ashor text and returns an array with these elements:
-    "html" => String of parsed HTML text
-    "beforeTheFoldPos" => Position of the backslash in the final "\f" found,
-                          or -1 if no "\f" was found.
-    Starts parsing the string $toParse from index $pos. */
-function parse($text, $postID, $oneLine = FALSE ,$pos = 0) {
+/* Parses Ashor text and returns an array with these elements:
+"html" => String of parsed HTML text.
+"beforeTheFoldText" => The string of parsed HTML text to appear on the index page,
+as designated by the \f tag, or the empty string if no \f tag is found.
+    
+Starts parsing the string $toParse from index $pos. */
+function parse($text, $postID, $oneLine = FALSE, $pos = 0) {
     $newline = 0;
     $escaped = false;
     $tagStack[] = array();
@@ -40,12 +41,12 @@ function parse($text, $postID, $oneLine = FALSE ,$pos = 0) {
         $ret["html"] = "<p class='ashor-p'>";
     else
         $ret["html"] = "";
-    $ret["beforeTheFoldPos"] = -1;
+    $ret["beforeTheFoldText"] = "";
 
     for (; $pos < strlen($text); $pos++) {
         if ($text[$pos] == "\n")
             $newline++;
-        elseif (ord($text[$pos]) >= 32) { //32 or 0x20 is the space character.
+        elseif (ord($text[$pos]) >= ORD_OF_SPACE_CHARACTER) { //See ashor.php for this constant
             if ($newline == 1) {
                 $ret["html"] .= "\n";
                 $newline = 0;
@@ -61,18 +62,11 @@ function parse($text, $postID, $oneLine = FALSE ,$pos = 0) {
                     $ret["html"] .= $text[$pos];
             } else { //If the next character is escaped, we parse the tag.
                 if ($text[$pos] == "]") {
-                    switch (array_pop($tagStack)) {
-                        case Tag::Bold:
-                        case Tag::Italics:
-                        case Tag::Header:
-                            $ret["html"] .= "</span>";
-                            break;
-                        case Tag::Link:
-                            $ret["html"] .= "</a>";
-                            break;
-                        default:
-                            echo "[Warning] Closed a tag where there was none.";
-                    }
+                    $closingTag = popTagStack($tagStack);
+                    if ($closingTag != NULL)
+                        $ret["html"] .= $closingTag;
+                    else
+                        echo "[Warning] Closed a tag where there was none.";
                 } elseif ($text[$pos] == "b" || $text[$pos] == "B") {
                     $ret["html"] .= "<span class=\"ashor-bold\">";
                     $tagStack[] = Tag::Bold;
@@ -91,8 +85,8 @@ function parse($text, $postID, $oneLine = FALSE ,$pos = 0) {
                     $ret["html"] .= "<a class='ashor-link' href='{$innards["attrib"]}'>";
                     $pos = $innards["pos"];
                     $tagStack[] = Tag::Link;
-                } elseif ($text[$pos] == "f" || $text[$pos] == "F")
-                    $ret["beforeTheFoldPos"] = $pos - 1; //$pos - 1 accounts for the extra 'h' character.
+                } elseif ($text[$pos] == "f" || $text[$pos] == "F") //'f' is for 'fold'
+                    $ret["beforeTheFoldText"] = closeBeforeTheFoldText($ret["html"], $tagStack) . "</p>";
                 elseif ($text[$pos] == "r" || $text[$pos] == "R") //'r' is for 'return'
                     $ret["html"] .= "<br>";
                 elseif ($text[$pos] == "\\")
@@ -120,4 +114,27 @@ function parseTagWithAttribute($str, $startPos) {
         die("Couldn't find a closing ']' for the tag around $startPos.");
     $ret["attrib"] = substr($str, $startPos, $ret["pos"] - $startPos);
     return $ret;
+}
+
+// Returns $beforeTheFoldText with all open tags closed.
+function closeBeforeTheFoldText($beforeTheFoldText, $tagStack) {
+    $tagStackLength = count($tagStack);
+    for ($i = 0; $i < $tagStackLength; $i++)
+        $beforeTheFoldText .= popTagStack($tagStack);
+    return $beforeTheFoldText;
+}
+
+/* Pops the topmost element from the referenced tagStack and returns
+its corresponding closing tag, or NULL if the stack is empty. */
+function popTagStack(& $tagStack) {
+    switch (array_pop($tagStack)) {
+        case Tag::Bold:
+        case Tag::Italics:
+        case Tag::Header:
+            return "</span>";
+        case Tag::Link:
+            return "</a>";
+        default:
+            return NULL;
+    }
 }
