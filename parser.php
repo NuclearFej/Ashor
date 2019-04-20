@@ -78,7 +78,7 @@ function parse($text, $postID, $oneLine = FALSE, $pos = 0) {
                     $tagStack[] = Tag::Header;
                 } elseif ($text[$pos] == "p" || $text[$pos] == "P") { //'p' is for 'picture'
                     $innards = parseTagWithAttribute($text, ++$pos);
-                    $ret["html"] .= "<img class='ashor-img' src='blog/img/$postID/{$innards["attrib"]}'>";
+                    $ret["html"] .= "<img class='ashor-img' src='img/$postID/{$innards["attrib"]}'>";
                     $pos = $innards["pos"]; //$pos is the ending ']', which will then be immediately incremented.
                 } elseif ($text[$pos] == "l" || $text[$pos] == "L") {
                     $innards = parseTagWithAttribute($text, ++$pos);
